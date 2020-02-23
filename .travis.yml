@@ -1,16 +1,21 @@
+language: ruby
 env:
   global:
     - SHARED=OFF
+    - BUILD_DEPENDENCY_FROM_SOURCE=OFF
+    - NPROC=2
+
+notifications:
+  email:
+    on_success: never
+    on_failure: always
 
 matrix:
 
-  notifications:
-    email: false # turn off email notifications for build failure
-
   include:
-    # Default environment of Ubuntu 14.04
+    # Style check only
     - os: linux
-      dist: trusty
+      dist: bionic
       sudo: true
       language: python
       python: "3.6"
@@ -19,13 +24,62 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - gcc-4.8
-            - g++-4.8
-            - cmake-data # to use cmake 3.0 or more recent
             - cmake
+            - clang-7
+            - clang-format-5.0
+      before_install: ./util/scripts/setup-linux.sh
+      script:
+        - mkdir build
+        - cd build
+        - cmake -DPYTHON_EXECUTABLE=`which python` ..
+        - pip install -U yapf==0.28.0
+        - make check-style
 
+    # Build docs only
     - os: linux
-      dist: trusty
+      dist: bionic
+      sudo: true
+      language: python
+      python: "3.6"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - cmake
+            - doxygen
+      before_install: ./util/scripts/setup-linux.sh
+      script:
+        - mkdir build
+        - cd build
+        - which python
+        - python -V
+        - pip install -U -q sphinx sphinx-rtd-theme
+        - cmake -DPYTHON_EXECUTABLE=`which python` ..
+        - make install-pip-package -j$NPROC
+        - python -c "from open3d import *; import open3d; print(open3d)"
+        - ../util/scripts/make-documentation.sh
+
+
+    # SHARED=ON, BUILD_DEPENDENCY_FROM_SOURCE=OFF
+    - os: linux
+      dist: bionic
+      sudo: required
+      language: python
+      python: "3.5"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - cmake
+      env: SHARED=ON
+      before_install: ./util/scripts/setup-linux.sh
+      script: ./util/scripts/run-travis.sh
+
+    # SHARED=OFF, BUILD_DEPENDENCY_FROM_SOURCE=ON
+    - os: linux
+      dist: bionic
       sudo: required
       language: python
       python: "3.6"
@@ -34,75 +88,44 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - gcc-4.8
-            - g++-4.8
-            - cmake-data # to use cmake 3.0 or more recent
             - cmake
-      env: SHARED=ON
+      env: BUILD_DEPENDENCY_FROM_SOURCE=ON
+      before_install: ./util/scripts/setup-linux.sh
+      script: ./util/scripts/run-travis.sh
 
-    # Similar environment of Ubuntu 16.04 (gcc 5.4)
-    # travis ci only supports Ubuntu 14.04 (trusty) gcc-5 and 6
-    # another option is to use docker.
+    # SHARED=ON, BUILD_DEPENDENCY_FROM_SOURCE=ON
     - os: linux
-      dist: trusty
+      dist: bionic
       sudo: required
       language: python
-      python: "3.6"
+      python: "3.7" # bionic has Python 3.7 on travis
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - gcc-6
-            - g++-6
-            - cmake-data # to use cmake 3.0 or more recent
             - cmake
+      env: SHARED=ON BUILD_DEPENDENCY_FROM_SOURCE=ON
+      before_install: ./util/scripts/setup-linux.sh
+      script: ./util/scripts/run-travis.sh
 
-    # Default environment of MacOS El Capitan
-    # compiled using clang shipped with xcode8
+    # Default environment of macOS 10.13 High Sierra
+    # compiled using clang shipped with xcode10.1
     - os: osx
-      osx_image: xcode8
+      osx_image: xcode10.1
+      before_install:
+        - ./util/scripts/install-deps-osx.sh
+      script: travis_wait 30 ./util/scripts/run-travis.sh
 
     - os: osx
-      osx_image: xcode8
-      env: SHARED=ON
+      osx_image: xcode10.1
+      env: BUILD_DEPENDENCY_FROM_SOURCE=ON
+      script: travis_wait 30 ./util/scripts/run-travis.sh
 
-    # Default environment of MacOS Sierra
-    # compiled using clang shipped with xcode8.3
-    - os: osx
-      osx_image: xcode8.3
+    # - env: DOCKER=YES UBUNTU=16.04 BUNDLE=deps ENV=py3 LINK=STATIC
+    #   script: ./util/docker/open3d-test/tools/test.sh $UBUNTU $BUNDLE $ENV $LINK
+    #   before_install: sudo apt-get update && sudo apt-get install -y realpath
 
-before_install:
-  # ISSUE: we may want to use '/scripts/install-deps-ubuntu.sh' in the future.
-  # At this moment, travis-ci supports up to ubuntu 14.04 and this environment
-  # does not recognize sudo apt-get install libglfw3-dev
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-      sudo apt-get install -y xorg-dev libglu1-mesa-dev libgl1-mesa-glx libglew-dev libjsoncpp-dev libeigen3-dev;
-      ./util/scripts/make-documentation.sh;
-      ./util/scripts/install-gtest.sh;
-    fi
-  # scripts/install-deps-osx.sh works well
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
-      brew install python;
-      ./util/scripts/install-deps-osx.sh;
-      ./util/scripts/install-gtest.sh;
-    fi
-
-  # for reference, display cmake and python version
-  - python -V
-  - cmake --version
-  # - pip install numpy
-
-script:
-  # Build commands
-  - mkdir build
-  - cd build
-  - cmake -DBUILD_SHARED_LIBS=$SHARED -DOpen3D_BUILD_UNIT_TESTS=ON ../src/
-  # make -j brings 'virtual memory exhausted: Cannot allocate memory' message
-  # this is presumably due to limited memory space of travis-ci
-  - make install
-  - python -V
-  # The following script has issues on SHARED = "ON"
-  # - if [ "$SHARED" == "OFF" ]; then
-  #     cd lib/Tutorial/Basic/ && python file_io.py
-  #   fi
+    # - env: DOCKER=YES UBUNTU=16.04 BUNDLE=deps ENV=py3 LINK=SHARED
+    #   script: ./util/docker/open3d-test/tools/test.sh $UBUNTU $BUNDLE $ENV $LINK
+    #   before_install: sudo apt-get update && sudo apt-get install -y realpath

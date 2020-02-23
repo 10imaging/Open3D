@@ -1,47 +1,46 @@
 .. _python_interface_tutorial:
 
 Python interface
--------------------------------------
+----------------
 
-If Open3D is successfully compiled with Python binding, it will create a Python library with name ``open3d``. Typically, you will find a file ``open3d.so`` in ``build/lib`` directory. This tutorial shows how to import ``open3d`` module and print out help information. For trouble shooing, see :ref:`python_binding`.
+For the C++ interface see :ref:`cplusplus_interface_tutorial`.
 
-.. code-block:: python
 
-    # src/Python/Tutorial/Basic/python_binding.py
+Install open3d Python package
+=============================
 
-    import numpy as np
+For installing Open3D Python package, see :ref:`install_open3d_python`.
 
-    def example_help_function():
-        import open3d
-        help(open3d)
-        help(open3d.PointCloud)
-        help(open3d.read_point_cloud)
 
-    def example_import_function():
-        from open3d import read_point_cloud
-        pcd = read_point_cloud("../../TestData/ICP/cloud_bin_0.pcd")
-        print(pcd)
+Install open3d from source
+==========================
 
-    if __name__ == "__main__":
-        example_help_function()
-        example_import_function()
-
-This scripts has two functions: ``example_help_function`` and ``example_import_all``
-that show very basic usage of Open3D Python module.
-
-.. note:: Depending on environment, the name of Python library may not ``open3d.so``. Regardless of the file name, ``import open3d`` should work.
+For installing from source, see :ref:`compilation`.
 
 .. _import_open3d_module:
 
 Import open3d module
-=====================================
+====================
 
-.. code-block:: python
+This tutorial shows how to import ``open3d`` module and print out help information.
+For trouble shooting, see :ref:`compilation_ubuntu_python_binding`.
 
-    def example_import_function():
-        from open3d import read_point_cloud
-        pcd = read_point_cloud("../../TestData/ICP/cloud_bin_0.pcd")
-        print(pcd)
+.. literalinclude:: ../../../examples/Python/Basic/python_binding.py
+   :language: python
+   :lineno-start: 5
+   :lines: 5-
+   :linenos:
+
+This scripts has two functions: ``example_help_function`` and ``example_import_all``
+that show very basic usage of Open3D Python module.
+
+.. note:: Depending on environment, the name of Python library may not be ``open3d.so``. Regardless of the file name, ``import open3d`` should work.
+
+.. literalinclude:: ../../../examples/Python/Basic/python_binding.py
+   :language: python
+   :lineno-start: 10
+   :lines: 10-12
+   :linenos:
 
 This imports ``read_point_cloud`` function from ``open3d`` module. It reads a point cloud file and returns an instance of ``PointCloud`` class. ``print(pcd)`` prints brief information of the point cloud:
 
@@ -53,21 +52,19 @@ This imports ``read_point_cloud`` function from ``open3d`` module. It reads a po
 .. _using_builtin_help_function:
 
 Using built-in help function
-=====================================
+````````````````````````````
 
 It is recommended to use Python built-in ``help`` function to get definitions and instructions of Open3D functions and classes. For example,
 
-.. code-block:: python
-
-    def example_help_function():
-        import open3d
-        help(open3d)
-        help(open3d.PointCloud)
-        help(open3d.read_point_cloud)
+.. literalinclude:: ../../../examples/Python/Basic/python_binding.py
+   :language: python
+   :lineno-start: 15
+   :lines: 15-18
+   :linenos:
 
 
 Browse open3d
-``````````````````````````````````````
+`````````````
 
 ``help(open3d)`` prints documents of ``open3d`` module.
 
@@ -99,7 +96,7 @@ Browse open3d
 
 
 Description of a class in open3d
-``````````````````````````````````````
+````````````````````````````````
 
 ``help(open3d.PointCloud)`` provides description of ``PointCloud`` class.
 
@@ -123,7 +120,7 @@ Description of a class in open3d
 
 
 Description of a function in open3d
-``````````````````````````````````````
+```````````````````````````````````
 
 ``help(open3d.read_point_cloud)`` provides description of input argument and return type of ``read_point_cloud`` function.
 

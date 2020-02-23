@@ -1,10 +1,11 @@
-echo
-echo uninstalling...
-echo $(find $(python  -m site --user-site) -iname open3d*.so)
-echo $(find $(python3 -m site --user-site) -iname open3d*.so)
+#!/usr/bin/env bash
+set -e
 
-# remove the Open3D Python module
-find $(python  -m site --user-site) -iname open3d*.so -delete
-find $(python3 -m site --user-site) -iname open3d*.so -delete
+echo
+echo installing...
+
+cd ../../build
+
+make uninstall
 
 echo
